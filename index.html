@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Placar 4DX - Operação Iceberg</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Fredoka+One&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background-color: #0c1425;
+        background-image: radial-gradient(
+            circle at 15% 50%,
+            rgba(100, 180, 255, 0.1),
+            transparent 30%
+          ),
+          radial-gradient(
+            circle at 85% 30%,
+            rgba(150, 220, 255, 0.08),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 50% 90%,
+            rgba(50, 150, 220, 0.1),
+            transparent 50%
+          );
+        color: #e2e8f0;
+        font-family: "Inter", sans-serif;
+        overflow-x: hidden;
+      }
+      #team-logo {
+        width: 248px;
+        height: auto;
+        margin-top: 9em;
+        left: 315px;
+        
+      }
+
+      .fun-font {
+        font-family: "Fredoka One", cursive;
+        letter-spacing: 2px;
+      }
+      .card-glow {
+        box-shadow: 0 0 20px rgba(34, 211, 238, 0.15),
+          0 0 8px rgba(34, 211, 238, 0.2);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        transition: all 0.3s ease;
+      }
+      .card-glow:hover {
+        box-shadow: 0 0 30px rgba(34, 211, 238, 0.25),
+          0 0 12px rgba(34, 211, 238, 0.3);
+      }
+      .ice-block {
+        width: 50px;
+        height: 50px;
+        transition: all 0.5s ease;
+        transform-origin: center;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #0c1425;
+        font-weight: bold;
+        position: relative;
+        cursor: pointer;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+      }
+      .ice-block:hover {
+        transform: scale(1.1);
+      }
+      .ice-block.md1 {
+        background: linear-gradient(145deg, #ffffff, #e0f2fe);
+        box-shadow: inset 0 0 6px #e0f2fe;
+      }
+      .ice-block.md2 {
+        background: linear-gradient(145deg, #bae6fd, #38bdf8);
+        box-shadow: inset 0 0 6px #7dd3fc;
+      }
+      .ice-block.broken {
+        background: transparent;
+        border: 2px dashed rgba(103, 232, 249, 0.7);
+        color: rgba(103, 232, 249, 0.8);
+        box-shadow: none;
+      }
+      .ice-block.cracked::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 20 20 L 50 50 L 45 55 L 70 80' stroke='rgba(0,0,0,0.3)' stroke-width='3' fill='none'/%3E%3Cpath d='M 50 50 L 80 40' stroke='rgba(0,0,0,0.3)' stroke-width='3' fill='none'/%3E%3C/svg%3E");
+        background-size: 80%;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      #penguin-animator {
+        position: fixed;
+        top: 50px;
+        left: 50px;
+        width: 70px;
+        height: 90px;
+        z-index: 100;
+        transition: all 0.7s ease-in-out;
+        pointer-events: none;
+      }
+      #pickaxe {
+        position: absolute;
+        width: 55px;
+        height: 55px;
+        top: 15px;
+        left: -20px;
+        transform: rotate(-45deg);
+        opacity: 0;
+        transition: all 0.2s ease-in-out;
+      }
+      #penguin-animator.smashing #penguin {
+        animation: penguin-body-smash 0.6s ease-in-out;
+      }
+      #penguin-animator.smashing #pickaxe {
+        animation: pickaxe-smash 0.6s ease-in-out;
+      }
+      @keyframes penguin-body-smash {
+        0% {
+          transform: translateY(0) rotate(0deg);
+        }
+        30% {
+          transform: translateY(-15px) rotate(-10deg);
+        }
+        60% {
+          transform: translateY(5px) rotate(15deg) scale(1.05);
+        }
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+      }
+      @keyframes pickaxe-smash {
+        0% {
+          opacity: 1;
+          transform: rotate(-45deg) scale(1);
+        }
+        30% {
+          opacity: 1;
+          transform: rotate(20deg) scale(1.2);
+        }
+        60% {
+          opacity: 1;
+          transform: rotate(-60deg) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: rotate(-45deg) scale(1);
+        }
+      }
+      .ice-shard {
+        position: fixed;
+        width: 12px;
+        height: 12px;
+        background: #a5f3fc;
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        animation: fly-out 1s ease-out forwards;
+        pointer-events: none;
+        z-index: 110;
+      }
+      @keyframes fly-out {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(var(--tx), var(--ty)) scale(0) rotate(var(--r));
+          opacity: 0;
+        }
+      }
+      #motivational-phrase {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Fredoka One", cursive;
+        font-size: 1.8rem;
+        color: #67e8f9;
+        opacity: 0;
+        transition: all 0.5s ease;
+        pointer-events: none;
+        text-shadow: 0 0 10px rgba(103, 232, 249, 0.7);
+        z-index: 200;
+      }
+      #motivational-phrase.visible {
+        opacity: 1;
+        transform: translate(-50%, 10px);
+      }
+      .modal-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(12, 20, 37, 0.95);
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease-in-out;
+      }
+      .modal-screen.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .victory-penguin {
+        width: 60px;
+        height: 70px;
+        animation: jump 1.5s ease-in-out infinite;
+      }
+      @keyframes jump {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0);
+        }
+        25% {
+          transform: translateY(-30px) rotate(-10deg);
+        }
+        50% {
+          transform: translateY(0) rotate(0);
+        }
+        75% {
+          transform: translateY(-15px) rotate(10deg);
+        }
+      }
+      .commitment-item[data-status="completed"] {
+        text-decoration: line-through;
+        opacity: 0.6;
+      }
+      .commitment-item[data-status="failed"] {
+        color: #fda4af; /* rose-300 */
+      }
+    </style>
+  </head>
+  <body class="p-4 md:p-8">
+    <div id="main-dashboard">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-8 relative">
+          <h1 class="fun-font text-4xl md:text-6xl text-cyan-300 tracking-wide">
+            Placar 4DZIG
+          </h1>
+          <p
+            class="fun-font text-xl md:text-2xl text-cyan-400 opacity-90 -mt-2 md:-mt-3"
+          >
+            Operação Quebra-Gelo
+          </p>
+          <div class="absolute top-0 right-0 flex items-center gap-2">
+            <input
+              type="file"
+              id="import-file-input"
+              class="hidden"
+              accept="application/json"
+            />
+            <button
+              id="import-btn"
+              class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-md transition-colors text-sm sm:text-base"
+            >
+              Importar
+            </button>
+            <button
+              id="export-btn"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-md transition-colors text-sm sm:text-base"
+            >
+              Exportar
+            </button>
+            <button
+              id="history-btn"
+              class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors text-sm sm:text-base"
+            >
+              Histórico
+            </button>
+          </div>
+        </div>
+
+        <div>
+        <div
+          class="mb-8 p-6 bg-slate-800/50 border border-cyan-500/30 rounded-lg text-center card-glow"
+        >
+          <img
+            id="team-logo"
+            src="equipe.png"
+            alt="Logótipo da Equipa"
+            class="absolute top-0 left-0 w-24 h-24 rounded-full"
+          />
+
+          <h3 class="fun-font text-xl text-cyan-300 mb-2">
+            Meta Crucialmente Importante (MCI)
+          </h3>
+          <p class="text-slate-300 max-w-3xl mx-auto">
+            Reduzir abertura de reports Not_bugs dos últimos 30 dias de
+            <strong class="text-white">1127</strong> para
+            <strong class="text-white">450</strong> (60%) até
+            <strong class="text-white">30/04/2026</strong>.
+          </p>
+          <div
+            class="mt-6 pt-4 border-t border-slate-700/50 space-y-3 text-sm text-left max-w-3xl mx-auto"
+          >
+          
+            <div>
+              <p class="text-cyan-400 font-bold">Definição MD1:</p>
+              <p class="text-slate-300">
+                Publicar e divulgar semanalmente
+                <strong>2 novos conteúdos</strong> e <strong>8 FAQs</strong> com
+                base nas dúvidas mais recorrentes identificadas nos chamados dos
+                últimos 15 dias.
+              </p>
+            </div>
+            <div>
+              <p class="text-cyan-400 font-bold">Definição MD2:</p>
+              <p class="text-slate-300">
+                Mapear semanalmente os
+                <strong>3 principais ofensores</strong> responsáveis pela
+                abertura de reports <strong>Not_Bug</strong> e propor ao menos
+                <strong>um plano de ação</strong> para cada um deles.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div class="lg:col-span-3">
+            <div
+              id="scoreboard-card"
+              class="bg-slate-800 p-6 rounded-lg card-glow h-full flex flex-col"
+            >
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="fun-font text-3xl text-cyan-400">
+                  Progresso Semanal
+                </h2>
+                <button
+                  class="expand-btn p-2 rounded-full hover:bg-slate-700/50 transition-colors"
+                  data-target="scoreboard-card"
+                  title="Expandir"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-slate-400"
+                  >
+                    <path
+                      d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div
+                class="flex justify-around text-center mb-4 text-sm text-slate-300 border-b border-t border-slate-700/50 py-2"
+              >
+                <div>
+                  <p class="font-bold text-cyan-500">MD1</p>
+                  <p id="md1-percentage" class="fun-font text-3xl">0%</p>
+                </div>
+                <div>
+                  <p class="font-bold text-cyan-500">MD2</p>
+                  <p id="md2-percentage" class="fun-font text-3xl">0%</p>
+                </div>
+              </div>
+              <div
+                class="flex items-center text-xs text-slate-400 font-bold uppercase py-2 px-3 border-b border-t border-slate-700"
+              >
+                <div class="w-1/4">Semana</div>
+                <div class="w-1/6 text-center">MD 1</div>
+                <div class="w-1/6 text-center">MD 2</div>
+                <div class="w-1/4 text-center">Nº de Reports</div>
+                <div class="w-1/6 text-center">Ações</div>
+              </div>
+              <div
+                id="weeks-list"
+                class="space-y-2 max-h-[60vh] overflow-y-auto pr-2 py-2 flex-grow"
+              >
+                <!-- Weeks will be rendered here by JS -->
+              </div>
+              <div class="mt-4">
+                <button
+                  id="add-week-btn"
+                  class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transform hover:scale-105 transition-transform duration-200"
+                >
+                  + Adicionar Semana
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="lg:col-span-2">
+            <div
+              id="chart-card"
+              class="bg-slate-800 p-6 rounded-lg card-glow h-full flex flex-col"
+            >
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="fun-font text-3xl text-cyan-400">Placar da MCI</h2>
+                <button
+                  class="expand-btn p-2 rounded-full hover:bg-slate-700/50 transition-colors"
+                  data-target="chart-card"
+                  title="Expandir"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-slate-400"
+                  >
+                    <path
+                      d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="relative w-full flex-grow h-80 mx-auto">
+                <canvas id="mciChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="management-view" class="hidden">
+      <div class="max-w-5xl mx-auto">
+        <button
+          id="back-to-dashboard-btn"
+          class="mb-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
+        >
+          &larr; Voltar ao Placar
+        </button>
+        <h2
+          id="management-title"
+          class="fun-font text-4xl text-cyan-300 mb-6"
+        ></h2>
+
+        <div class="bg-slate-800/50 p-6 rounded-lg card-glow mb-8">
+          <h3 class="fun-font text-2xl text-cyan-400 mb-4">Novo Compromisso</h3>
+          <form
+            id="add-commitment-form"
+            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+          >
+            <div class="md:col-span-2">
+              <label
+                for="commitment-text"
+                class="block text-sm font-medium text-slate-400 mb-1"
+                >Compromisso</label
+              >
+              <input
+                type="text"
+                id="commitment-text"
+                required
+                class="w-full bg-slate-900/80 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+            <div>
+              <label
+                for="commitment-responsible"
+                class="block text-sm font-medium text-slate-400 mb-1"
+                >Responsável</label
+              >
+              <input
+                type="text"
+                id="commitment-responsible"
+                required
+                class="w-full bg-slate-900/80 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+            <div>
+              <label
+                for="commitment-md"
+                class="block text-sm font-medium text-slate-400 mb-1"
+                >MD</label
+              >
+              <select
+                id="commitment-md"
+                class="w-full bg-slate-900/80 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500"
+              >
+                <option value="md1">MD1</option>
+                <option value="md2">MD2</option>
+              </select>
+            </div>
+            <div class="md:col-span-4">
+              <button
+                type="submit"
+                class="w-full md:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-md transform hover:scale-105 transition-transform duration-200"
+              >
+                Adicionar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3
+              class="fun-font text-2xl text-cyan-400 mb-4 border-b-2 border-cyan-500/30 pb-2"
+            >
+              Compromissos MD1
+            </h3>
+            <div id="md1-commitments-list" class="space-y-3"></div>
+          </div>
+          <div>
+            <h3
+              class="fun-font text-2xl text-cyan-400 mb-4 border-b-2 border-cyan-500/30 pb-2"
+            >
+              Compromissos MD2
+            </h3>
+            <div id="md2-commitments-list" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="history-view" class="hidden">
+      <div class="max-w-5xl mx-auto">
+        <button
+          id="back-from-history-btn"
+          class="mb-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
+        >
+          &larr; Voltar ao Placar
+        </button>
+        <h2 class="fun-font text-4xl text-cyan-300 mb-6">
+          Histórico de Progresso
+        </h2>
+        <div id="history-content" class="space-y-6">
+          <!-- History will be rendered here -->
+        </div>
+      </div>
+    </div>
+
+    <div id="penguin-animator">
+      <svg id="penguin" viewBox="0 0 60 70" class="w-full h-full">
+        <path
+          d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z"
+          fill="#333"
+        />
+        <path
+          d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z"
+          fill="white"
+        />
+        <circle cx="22" cy="30" r="3" fill="#333" />
+        <circle cx="38" cy="30" r="3" fill="#333" />
+        <polygon points="27,38 33,38 30,45" fill="orange" />
+        <ellipse cx="20" cy="68" rx="8" ry="4" fill="orange" />
+        <ellipse cx="40" cy="68" rx="8" ry="4" fill="orange" />
+      </svg>
+      <svg id="pickaxe" viewBox="0 0 100 100">
+        <g transform="rotate(135 50 50)">
+          <rect x="45" y="0" width="10" height="100" fill="#8B5A2B" rx="3" />
+          <path d="M10,40 Q50,25 90,40 L95,50 Q50,35 5,50 Z" fill="#7f8c8d" />
+          <rect x="40" y="38" width="20" height="15" fill="#593a1c" />
+          <path d="M15,41 Q50,30 85,41 L90,48 Q50,37 10,48 Z" fill="#95a5a6" />
+        </g>
+      </svg>
+    </div>
+    <div id="motivational-phrase"></div>
+
+    <div id="victory-screen" class="modal-screen">
+      <h2 class="fun-font text-5xl text-cyan-300 mb-4 text-center">
+        Meta Atingida!
+      </h2>
+      <p class="text-xl text-slate-300 mb-8 text-center">
+        Vocês chegaram ao nível do mar! Parabéns, equipe!
+      </p>
+      <div class="flex space-x-8 mb-8">
+        <div class="victory-penguin" style="animation-delay: 0s">
+          <svg viewBox="0 0 60 70">
+            <path
+              d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z"
+              fill="#333"
+            />
+            <path
+              d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z"
+              fill="white"
+            />
+            <circle cx="22" cy="30" r="3" fill="#333" />
+            <circle cx="38" cy="30" r="3" fill="#333" />
+            <polygon points="27,38 33,38 30,45" fill="orange" />
+            <ellipse cx="20" cy="68" rx="8" ry="4" fill="orange" />
+            <ellipse cx="40" cy="68" rx="8" ry="4" fill="orange" />
+          </svg>
+        </div>
+        <div class="victory-penguin" style="animation-delay: 0.2s">
+          <svg viewBox="0 0 60 70">
+            <path
+              d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z"
+              fill="#333"
+            />
+            <path
+              d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z"
+              fill="white"
+            />
+            <circle cx="22" cy="30" r="3" fill="#333" />
+            <circle cx="38" cy="30" r="3" fill="#333" />
+            <polygon points="27,38 33,38 30,45" fill="orange" />
+            <ellipse cx="20" cy="68" rx="8" ry="4" fill="orange" />
+            <ellipse cx="40" cy="68" rx="8" ry="4" fill="orange" />
+          </svg>
+        </div>
+        <div class="victory-penguin" style="animation-delay: 0.4s">
+          <svg viewBox="0 0 60 70">
+            <path
+              d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z"
+              fill="#333"
+            />
+            <path
+              d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z"
+              fill="white"
+            />
+            <circle cx="22" cy="30" r="3" fill="#333" />
+            <circle cx="38" cy="30" r="3" fill="#333" />
+            <polygon points="27,38 33,38 30,45" fill="orange" />
+            <ellipse cx="20" cy="68" rx="8" ry="4" fill="orange" />
+            <ellipse cx="40" cy="68" rx="8" ry="4" fill="orange" />
+          </svg>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <button
+          id="continue-btn"
+          class="fun-font bg-slate-500 hover:bg-slate-600 text-white text-xl py-3 px-8 rounded-lg shadow-lg transform hover:scale-105 transition-transform"
+        >
+          Continuar
+        </button>
+        <button
+          id="restart-btn"
+          class="fun-font bg-cyan-600 hover:bg-cyan-700 text-white text-xl py-3 px-8 rounded-lg shadow-lg transform hover:scale-105 transition-transform"
+        >
+          Reiniciar
+        </button>
+      </div>
+    </div>
+
+    <!-- Fullscreen Modal -->
+    <div
+      id="fullscreen-modal"
+      class="fixed inset-0 bg-slate-900/95 z-[300] hidden items-center justify-center p-4 sm:p-8 md:p-12"
+      style="backdrop-filter: blur(8px)"
+    >
+      <button
+        id="close-fullscreen-btn"
+        class="absolute top-4 right-4 text-white hover:text-cyan-300 transition-colors z-10"
+        title="Fechar (Esc)"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div id="fullscreen-content" class="w-full h-full">
+        <!-- Fullscreen element will be moved here -->
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const mainDashboard = document.getElementById("main-dashboard");
+        const managementView = document.getElementById("management-view");
+        const historyView = document.getElementById("history-view");
+        const backToDashboardBtn = document.getElementById(
+          "back-to-dashboard-btn"
+        );
+        const backFromHistoryBtn = document.getElementById(
+          "back-from-history-btn"
+        );
+        const historyBtn = document.getElementById("history-btn");
+        const historyContent = document.getElementById("history-content");
+        const penguinAnimator = document.getElementById("penguin-animator");
+        const motivationalPhraseEl = document.getElementById(
+          "motivational-phrase"
+        );
+        const victoryScreen = document.getElementById("victory-screen");
+        const restartBtn = document.getElementById("restart-btn");
+        const continueBtn = document.getElementById("continue-btn");
+        const addWeekBtn = document.getElementById("add-week-btn");
+        const weeksList = document.getElementById("weeks-list");
+        const md1PercentageEl = document.getElementById("md1-percentage");
+        const md2PercentageEl = document.getElementById("md2-percentage");
+        const fullscreenModal = document.getElementById("fullscreen-modal");
+        const fullscreenContent = document.getElementById("fullscreen-content");
+        const closeFullscreenBtn = document.getElementById(
+          "close-fullscreen-btn"
+        );
+        const addCommitmentForm = document.getElementById(
+          "add-commitment-form"
+        );
+        const managementTitle = document.getElementById("management-title");
+        const md1CommitmentsList = document.getElementById(
+          "md1-commitments-list"
+        );
+        const md2CommitmentsList = document.getElementById(
+          "md2-commitments-list"
+        );
+        const importBtn = document.getElementById("import-btn");
+        const exportBtn = document.getElementById("export-btn");
+        const importFileInput = document.getElementById("import-file-input");
+
+        let scoreboardData = { weeks: [] };
+        let mciChartInstance = null;
+        let audioCtx;
+        const penguinHomePosition = {
+          top: "50px",
+          left: "50px",
+          right: "auto",
+        };
+        let currentManagingWeekIndex = null;
+
+        // Fullscreen state
+        let originalParent = null;
+        let elementInFullscreen = null;
+        let placeholder = null;
+
+        const phrases = ["Mandou bem!", "É isso aí!", "Quebrou tudo!"];
+        const START_REPORTS = 1127;
+        const GOAL_REPORTS = 450;
+        const PROJECT_START_DATE = new Date("2025-10-20");
+        const END_DATE = new Date("2026-04-30");
+
+        function formatDate(dateString) {
+          const date = new Date(dateString);
+          const day = String(date.getUTCDate()).padStart(2, "0");
+          const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+          const year = date.getUTCFullYear();
+          return `${day}/${month}/${year}`;
+        }
+
+        function addWeek() {
+          const newWeekIndex = scoreboardData.weeks.length;
+          const newStartDate = new Date(PROJECT_START_DATE);
+          newStartDate.setDate(newStartDate.getDate() + newWeekIndex * 7);
+
+          scoreboardData.weeks.push({
+            id: `w${Date.now()}`,
+            startDate: newStartDate.toISOString(),
+            md1Status: "pending",
+            md2Status: "pending",
+            reports: null,
+            commitments: [],
+          });
+          renderAll();
+        }
+
+        function updateReportCount(index, value) {
+          if (index >= 0 && index < scoreboardData.weeks.length) {
+            scoreboardData.weeks[index].reports =
+              value === "" ? null : parseInt(value, 10);
+            renderAll();
+          }
+        }
+
+        async function setWeekStatus(weekIndex, md, intendedStatus) {
+          if (document.body.classList.contains("animating")) return;
+          const week = scoreboardData.weeks[weekIndex];
+          if (!week) return;
+
+          const currentStatus = week[`${md}Status`];
+          const newStatus =
+            currentStatus === intendedStatus ? "pending" : intendedStatus;
+          week[`${md}Status`] = newStatus;
+
+          const targetBlock = document.getElementById(`${week.id}-${md}`);
+          document.body.classList.add("animating");
+
+          if (newStatus === "completed")
+            await animatePenguinAction(targetBlock, "break");
+          else if (newStatus === "failed")
+            await animatePenguinAction(targetBlock, "crack");
+
+          renderAll();
+
+          setTimeout(() => {
+            document.body.classList.remove("animating");
+          }, 700);
+        }
+
+        function renderAll() {
+          weeksList.innerHTML = "";
+          scoreboardData.weeks.forEach((week, index) => {
+            const row = document.createElement("div");
+            row.className = "flex items-center p-2 rounded-md bg-slate-700/50";
+
+            const block1 = document.createElement("div");
+            block1.id = `${week.id}-md1`;
+            block1.className = "ice-block md1";
+            if (week.md1Status === "completed") block1.classList.add("broken");
+            if (week.md1Status === "failed") block1.classList.add("cracked");
+
+            const block2 = document.createElement("div");
+            block2.id = `${week.id}-md2`;
+            block2.className = "ice-block md2";
+            if (week.md2Status === "completed") block2.classList.add("broken");
+            if (week.md2Status === "failed") block2.classList.add("cracked");
+
+            const formattedDate = formatDate(week.startDate);
+
+            row.innerHTML = `
+                    <div class="w-1/4 font-bold">Semana ${index + 1}
+                        <span class="text-xs text-slate-400 font-normal block">${formattedDate}</span>
+                    </div>
+                    <div class="w-1/6 flex justify-center"></div>
+                    <div class="w-1/6 flex justify-center"></div>
+                    <div class="w-1/4">
+                        <input type="number" data-index="${index}" class="report-input w-full bg-slate-800 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500" placeholder="Reports..." value="${
+              week.reports !== null ? week.reports : ""
+            }">
+                    </div>
+                    <div class="w-1/6 text-center">
+                        <button class="manage-week-btn text-xs bg-slate-600 hover:bg-slate-500 text-white font-bold py-1 px-2 rounded-md transition-colors" data-index="${index}">Gerenciar</button>
+                    </div>
+                `;
+            row.children[1].appendChild(block1);
+            row.children[2].appendChild(block2);
+
+            block1.addEventListener("click", () =>
+              setWeekStatus(index, "md1", "completed")
+            );
+            block1.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              setWeekStatus(index, "md1", "failed");
+            });
+            block2.addEventListener("click", () =>
+              setWeekStatus(index, "md2", "completed")
+            );
+            block2.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              setWeekStatus(index, "md2", "failed");
+            });
+
+            weeksList.appendChild(row);
+          });
+
+          document.querySelectorAll(".report-input").forEach((input) => {
+            input.addEventListener("change", (e) =>
+              updateReportCount(
+                parseInt(e.target.dataset.index),
+                e.target.value
+              )
+            );
+          });
+
+          document.querySelectorAll(".manage-week-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) =>
+              showManagementView(parseInt(e.target.dataset.index))
+            );
+          });
+
+          const totalWeeks = scoreboardData.weeks.length;
+          if (totalWeeks > 0) {
+            const md1Completed = scoreboardData.weeks.filter(
+              (w) => w.md1Status === "completed"
+            ).length;
+            const md2Completed = scoreboardData.weeks.filter(
+              (w) => w.md2Status === "completed"
+            ).length;
+            md1PercentageEl.textContent = `${Math.round(
+              (md1Completed / totalWeeks) * 100
+            )}%`;
+            md2PercentageEl.textContent = `${Math.round(
+              (md2Completed / totalWeeks) * 100
+            )}%`;
+          } else {
+            md1PercentageEl.textContent = "0%";
+            md2PercentageEl.textContent = "0%";
+          }
+
+          penguinAnimator.style.top = penguinHomePosition.top;
+          penguinAnimator.style.left = penguinHomePosition.left;
+
+          updateMciChart();
+          checkForCompletion();
+        }
+
+        function showManagementView(weekIndex) {
+          currentManagingWeekIndex = weekIndex;
+          mainDashboard.classList.add("hidden");
+          historyView.classList.add("hidden");
+          managementView.classList.remove("hidden");
+          renderManagementView();
+        }
+
+        function hideManagementView() {
+          currentManagingWeekIndex = null;
+          managementView.classList.add("hidden");
+          mainDashboard.classList.remove("hidden");
+          renderAll();
+        }
+
+        function showHistoryView() {
+          mainDashboard.classList.add("hidden");
+          managementView.classList.add("hidden");
+          historyView.classList.remove("hidden");
+          renderHistoryView();
+        }
+
+        function hideHistoryView() {
+          historyView.classList.add("hidden");
+          mainDashboard.classList.remove("hidden");
+        }
+
+        function getStatusIcon(status) {
+          if (status === "completed")
+            return '<span class="text-green-400 font-bold">✔ Concluído</span>';
+          if (status === "failed")
+            return '<span class="text-red-400 font-bold">✖ Falhou</span>';
+          return '<span class="text-yellow-400 font-bold">● Pendente</span>';
+        }
+
+        function renderHistoryView() {
+          historyContent.innerHTML = "";
+          if (scoreboardData.weeks.length === 0) {
+            historyContent.innerHTML =
+              '<p class="text-slate-400 text-center">Nenhuma semana foi adicionada ainda.</p>';
+            return;
+          }
+
+          [...scoreboardData.weeks].reverse().forEach((week, revIndex) => {
+            const originalIndex = scoreboardData.weeks.length - 1 - revIndex;
+            const weekContainer = document.createElement("div");
+            weekContainer.className =
+              "bg-slate-800/50 p-6 rounded-lg card-glow";
+            const formattedDate = formatDate(week.startDate);
+
+            const md1Commitments = week.commitments.filter(
+              (c) => c.md === "md1"
+            );
+            const md2Commitments = week.commitments.filter(
+              (c) => c.md === "md2"
+            );
+
+            let commitmentsHtml =
+              '<p class="text-slate-500 mt-2">Nenhum compromisso cadastrado para esta semana.</p>';
+            if (week.commitments.length > 0) {
+              commitmentsHtml = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div>
+                                <h4 class="font-bold text-cyan-400 mb-2">MD1 Compromissos</h4>
+                                <div class="space-y-2 text-sm">
+                                    ${
+                                      md1Commitments.length > 0
+                                        ? md1Commitments
+                                            .map(
+                                              (c) => `
+                                        <div class="bg-slate-900/50 p-2 rounded">
+                                            <p>${c.text} <strong>(${
+                                                c.responsible
+                                              })</strong> - ${getStatusIcon(
+                                                c.status
+                                              )}</p>
+                                        </div>
+                                    `
+                                            )
+                                            .join("")
+                                        : '<p class="text-slate-500 text-sm">Nenhum compromisso.</p>'
+                                    }
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-cyan-400 mb-2">MD2 Compromissos</h4>
+                                <div class="space-y-2 text-sm">
+                                    ${
+                                      md2Commitments.length > 0
+                                        ? md2Commitments
+                                            .map(
+                                              (c) => `
+                                        <div class="bg-slate-900/50 p-2 rounded">
+                                            <p>${c.text} <strong>(${
+                                                c.responsible
+                                              })</strong> - ${getStatusIcon(
+                                                c.status
+                                              )}</p>
+                                        </div>
+                                    `
+                                            )
+                                            .join("")
+                                        : '<p class="text-slate-500 text-sm">Nenhum compromisso.</p>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }
+
+            weekContainer.innerHTML = `
+                    <h3 class="fun-font text-2xl text-cyan-300 border-b border-slate-700 pb-2 mb-4">
+                        Semana ${originalIndex + 1}
+                        <span class="text-lg font-normal text-slate-400 ml-2">(${formattedDate})</span>
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-slate-400">Desempenho MCI</p>
+                            <p class="font-bold text-xl">${
+                              week.reports !== null ? week.reports : "N/A"
+                            }</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-400">Status MD1</p>
+                            <div class="font-bold text-lg">${getStatusIcon(
+                              week.md1Status
+                            )}</div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-400">Status MD2</p>
+                            <div class="font-bold text-lg">${getStatusIcon(
+                              week.md2Status
+                            )}</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-700">
+                        <h4 class="fun-font text-xl text-cyan-400">Detalhes dos Compromissos</h4>
+                        ${commitmentsHtml}
+                    </div>
+                `;
+
+            historyContent.appendChild(weekContainer);
+          });
+        }
+
+        function renderManagementView() {
+          if (currentManagingWeekIndex === null) return;
+          const week = scoreboardData.weeks[currentManagingWeekIndex];
+          const formattedDate = formatDate(week.startDate);
+          managementTitle.textContent = `Gerenciando Compromissos - Semana ${
+            currentManagingWeekIndex + 1
+          } (${formattedDate})`;
+
+          md1CommitmentsList.innerHTML = "";
+          md2CommitmentsList.innerHTML = "";
+
+          week.commitments.forEach((c) => {
+            const item = document.createElement("div");
+            item.className =
+              "commitment-item bg-slate-900/70 p-3 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2";
+            item.dataset.status = c.status;
+
+            item.innerHTML = `
+                    <div class="flex-grow">
+                        <p class="font-bold">${c.text}</p>
+                        <p class="text-xs text-slate-400">Responsável: ${
+                          c.responsible
+                        }</p>
+                    </div>
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <button class="status-btn text-xs ${
+                          c.status === "completed"
+                            ? "bg-green-500"
+                            : "bg-slate-600 hover:bg-green-500"
+                        } text-white font-bold p-1 rounded-md" data-id="${
+              c.id
+            }" data-status="completed" title="Concluir">&#10003;</button>
+                        <button class="status-btn text-xs ${
+                          c.status === "failed"
+                            ? "bg-red-500"
+                            : "bg-slate-600 hover:bg-red-500"
+                        } text-white font-bold p-1 rounded-md" data-id="${
+              c.id
+            }" data-status="failed" title="Falhou">&#10007;</button>
+                         <button class="delete-btn text-xs bg-gray-700 hover:bg-gray-600 text-white font-bold p-1 rounded-md" data-id="${
+                           c.id
+                         }" title="Excluir">&times;</button>
+                    </div>
+                `;
+            if (c.md === "md1") md1CommitmentsList.appendChild(item);
+            else md2CommitmentsList.appendChild(item);
+          });
+
+          document.querySelectorAll(".status-btn").forEach((btn) =>
+            btn.addEventListener("click", (e) => {
+              const { id, status } = e.currentTarget.dataset;
+              updateCommitmentStatus(id, status);
+            })
+          );
+
+          document.querySelectorAll(".delete-btn").forEach((btn) =>
+            btn.addEventListener("click", (e) => {
+              deleteCommitment(e.currentTarget.dataset.id);
+            })
+          );
+        }
+
+        function addCommitment(e) {
+          e.preventDefault();
+          if (currentManagingWeekIndex === null) return;
+
+          const textInput = document.getElementById("commitment-text");
+          const responsibleInput = document.getElementById(
+            "commitment-responsible"
+          );
+          const mdSelect = document.getElementById("commitment-md");
+
+          const newCommitment = {
+            id: `c${Date.now()}`,
+            md: mdSelect.value,
+            text: textInput.value,
+            responsible: responsibleInput.value,
+            status: "pending",
+          };
+
+          scoreboardData.weeks[currentManagingWeekIndex].commitments.push(
+            newCommitment
+          );
+          renderManagementView();
+          addCommitmentForm.reset();
+        }
+
+        function updateCommitmentStatus(commitmentId, newStatus) {
+          if (currentManagingWeekIndex === null) return;
+          const week = scoreboardData.weeks[currentManagingWeekIndex];
+          const commitment = week.commitments.find(
+            (c) => c.id === commitmentId
+          );
+          if (commitment) {
+            commitment.status =
+              commitment.status === newStatus ? "pending" : newStatus;
+            renderManagementView();
+          }
+        }
+
+        function deleteCommitment(commitmentId) {
+          if (currentManagingWeekIndex === null) return;
+          const week = scoreboardData.weeks[currentManagingWeekIndex];
+          week.commitments = week.commitments.filter(
+            (c) => c.id !== commitmentId
+          );
+          renderManagementView();
+        }
+
+        function checkForCompletion() {
+          if (scoreboardData.weeks.length === 0) return;
+          const lastReport = scoreboardData.weeks
+            .map((w) => w.reports)
+            .filter((r) => r !== null)
+            .pop();
+          if (lastReport !== undefined && lastReport <= GOAL_REPORTS) {
+            if (!victoryScreen.classList.contains("visible")) {
+              setTimeout(() => victoryScreen.classList.add("visible"), 800);
+            }
+          }
+        }
+
+        function initAudio() {
+          if (!audioCtx) {
+            try {
+              audioCtx = new (window.AudioContext ||
+                window.webkitAudioContext)();
+            } catch (e) {
+              console.error("Web Audio API is not supported");
+            }
+          }
+        }
+
+        function playSound(type) {
+          initAudio();
+          if (!audioCtx) return;
+          if (type === "crack") {
+            const bufferSize = audioCtx.sampleRate * 0.2,
+              buffer = audioCtx.createBuffer(
+                1,
+                bufferSize,
+                audioCtx.sampleRate
+              );
+            let data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++)
+              data[i] = Math.random() * 2 - 1;
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(
+              0.01,
+              audioCtx.currentTime + 0.18
+            );
+            source.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            source.start(0);
+          } else if (type === "break") {
+            const osc = audioCtx.createOscillator(),
+              gain = audioCtx.createGain();
+            osc.type = "square";
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(
+              200,
+              audioCtx.currentTime + 0.1
+            );
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(
+              0.01,
+              audioCtx.currentTime + 0.15
+            );
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+          }
+        }
+
+        function createIceShards(targetElement) {
+          const rect = targetElement.getBoundingClientRect();
+          const startX = rect.left + rect.width / 2,
+            startY = rect.top + rect.height / 2;
+          for (let i = 0; i < 10; i++) {
+            const shard = document.createElement("div");
+            shard.className = "ice-shard";
+            shard.style.top = `${startY}px`;
+            shard.style.left = `${startX}px`;
+            const angle = Math.random() * Math.PI * 2,
+              distance = Math.random() * 90 + 50,
+              rotation = Math.random() * 720 - 360;
+            shard.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
+            shard.style.setProperty("--ty", `${Math.sin(angle) * distance}px`);
+            shard.style.setProperty("--r", `${rotation}deg`);
+            document.body.appendChild(shard);
+            setTimeout(() => shard.remove(), 1000);
+          }
+        }
+
+        async function animatePenguinAction(targetBlock, action) {
+          const targetRect = targetBlock.getBoundingClientRect();
+          penguinAnimator.style.top = `${
+            targetRect.top -
+            penguinAnimator.offsetHeight / 2 +
+            targetRect.height / 2
+          }px`;
+          penguinAnimator.style.left = `${targetRect.right + 10}px`;
+          await new Promise((r) => setTimeout(r, 700));
+
+          penguinAnimator.classList.add("smashing");
+          if (action === "break") {
+            playSound("break");
+            createIceShards(targetBlock);
+            motivationalPhraseEl.textContent =
+              phrases[Math.floor(Math.random() * phrases.length)];
+            motivationalPhraseEl.classList.add("visible");
+            setTimeout(
+              () => motivationalPhraseEl.classList.remove("visible"),
+              2000
+            );
+          } else playSound("crack");
+
+          await new Promise((r) => setTimeout(r, 600));
+          penguinAnimator.classList.remove("smashing");
+
+          await new Promise((r) => setTimeout(r, 300));
+          penguinAnimator.style.top = penguinHomePosition.top;
+          penguinAnimator.style.left = penguinHomePosition.left;
+          await new Promise((r) => setTimeout(r, 700));
+        }
+
+        function openFullscreen(targetId) {
+          const element = document.getElementById(targetId);
+          if (!element || elementInFullscreen) return;
+
+          elementInFullscreen = element;
+          originalParent = element.parentNode;
+
+          placeholder = document.createElement("div");
+          originalParent.insertBefore(placeholder, element);
+
+          if (targetId === "chart-card" && mciChartInstance) {
+            mciChartInstance.destroy();
+            mciChartInstance = null;
+          }
+
+          fullscreenContent.appendChild(element);
+          fullscreenModal.classList.remove("hidden");
+          fullscreenModal.classList.add("flex");
+          document.body.style.overflow = "hidden";
+
+          if (targetId === "chart-card") {
+            updateMciChart();
+          }
+        }
+
+        function closeFullscreen() {
+          if (!elementInFullscreen || !originalParent || !placeholder) return;
+
+          const targetId = elementInFullscreen.id;
+
+          if (targetId === "chart-card" && mciChartInstance) {
+            mciChartInstance.destroy();
+            mciChartInstance = null;
+          }
+
+          placeholder.replaceWith(elementInFullscreen);
+          placeholder = null;
+
+          fullscreenModal.classList.add("hidden");
+          fullscreenModal.classList.remove("flex");
+          document.body.style.overflow = "";
+
+          if (targetId === "chart-card") {
+            updateMciChart();
+          }
+
+          elementInFullscreen = null;
+          originalParent = null;
+        }
+
+        function updateMciChart() {
+          const ctx = document.getElementById("mciChart").getContext("2d");
+          const iceCubeIcon = new Image();
+          iceCubeIcon.src =
+            "data:image/svg+xml;base64," +
+            btoa(
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="25" height="25"><path d="M20 30 L50 10 L80 30 L50 50 Z" fill="rgba(224, 242, 254, 1)" stroke="#a5f3fc" stroke-width="5"/><path d="M20 30 L20 70 L50 90 L50 50 Z" fill="rgba(186, 230, 253, 1)" stroke="#a5f3fc" stroke-width="5"/><path d="M50 50 L50 90 L80 70 L80 30 Z" fill="rgba(125, 211, 252, 1)" stroke="#a5f3fc" stroke-width="5"/></svg>'
+            );
+
+          const penguinIcon = new Image();
+          penguinIcon.src =
+            "data:image/svg+xml;base64," +
+            btoa(
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70" width="25" height="25"><path d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z" fill="#333"/><path d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z" fill="white"/><circle cx="22" cy="30" r="3" fill="#333"/><circle cx="38" cy="30" r="3" fill="#333"/><polygon points="27,38 33,38 30,45" fill="orange"/><ellipse cx="20" cy="68" rx="8" ry="4" fill="orange"/><ellipse cx="40" cy="68" rx="8" ry="4" fill="orange"/></svg>'
+            );
+
+          const actualProgressData = [
+            START_REPORTS,
+            ...scoreboardData.weeks.map((w) => w.reports),
+          ];
+
+          const pointStyles = actualProgressData.map((value) => {
+            if (value === null || typeof value === "undefined")
+              return iceCubeIcon;
+            return value < START_REPORTS ? penguinIcon : iceCubeIcon;
+          });
+
+          const totalWeeksInProject = Math.ceil(
+            (END_DATE - PROJECT_START_DATE) / (1000 * 60 * 60 * 24 * 7)
+          );
+
+          const burndownLineData = Array.from(
+            { length: totalWeeksInProject + 1 },
+            (_, i) => {
+              if (totalWeeksInProject <= 0) return START_REPORTS;
+              const progress = i / totalWeeksInProject;
+              return START_REPORTS - progress * (START_REPORTS - GOAL_REPORTS);
+            }
+          );
+
+          const allLabels = ["Início"];
+          for (let i = 0; i < totalWeeksInProject; i++) {
+            const weekDate = new Date(PROJECT_START_DATE);
+            weekDate.setUTCDate(weekDate.getUTCDate() + i * 7);
+            allLabels.push(`S${i + 1} ${formatDate(weekDate)}`);
+          }
+
+          const goalLineData = Array(allLabels.length).fill(GOAL_REPORTS);
+
+          const icebergGradient = ctx.createLinearGradient(0, 50, 0, 300);
+          icebergGradient.addColorStop(0, "rgba(224, 242, 254, 0.6)");
+          icebergGradient.addColorStop(1, "rgba(165, 243, 252, 0.1)");
+
+          const waterPlugin = {
+            id: "waterEffect",
+            afterDraw(chart) {
+              const {
+                ctx,
+                chartArea: { top, bottom, left, right },
+                scales: { y },
+              } = chart;
+              if (!y) return;
+              const yWater = y.getPixelForValue(GOAL_REPORTS);
+              if (yWater < top) return;
+              ctx.save();
+              ctx.beginPath();
+              ctx.moveTo(left, yWater);
+              for (let i = left; i < right; i++)
+                ctx.lineTo(
+                  i,
+                  yWater + Math.sin((i + Date.now() / 200) * 0.05) * 2
+                );
+              ctx.lineTo(right, bottom);
+              ctx.lineTo(left, bottom);
+              ctx.closePath();
+              const waterGradient = ctx.createLinearGradient(
+                0,
+                yWater,
+                0,
+                bottom
+              );
+              waterGradient.addColorStop(0, "rgba(12, 74, 110, 0.7)");
+              waterGradient.addColorStop(1, "rgba(8, 47, 73, 0.9)");
+              ctx.fillStyle = waterGradient;
+              ctx.fill();
+              ctx.restore();
+            },
+          };
+
+          if (mciChartInstance) {
+            mciChartInstance.data.labels = allLabels;
+            mciChartInstance.data.datasets[0].data = actualProgressData;
+            mciChartInstance.data.datasets[0].pointStyle = pointStyles;
+            mciChartInstance.data.datasets[1].data = burndownLineData;
+            mciChartInstance.data.datasets[2].data = goalLineData;
+            mciChartInstance.update("none");
+            return;
+          }
+
+          mciChartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: allLabels,
+              datasets: [
+                {
+                  label: "Progresso Real",
+                  data: actualProgressData,
+                  borderColor: "#e0f2fe",
+                  backgroundColor: icebergGradient,
+                  fill: "start",
+                  tension: 0.4,
+                  pointStyle: pointStyles,
+                  pointRadius: 10,
+                  pointHoverRadius: 15,
+                  spanGaps: true,
+                },
+                {
+                  label: "Linha de Burndown",
+                  data: burndownLineData,
+                  borderColor: "#facc15",
+                  backgroundColor: "transparent",
+                  borderDash: [5, 5],
+                  pointRadius: 0,
+                },
+                {
+                  label: "Meta",
+                  data: goalLineData,
+                  borderColor: "#4ade80",
+                  backgroundColor: "transparent",
+                  pointRadius: 0,
+                  borderWidth: 2,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 1000 },
+              plugins: {
+                legend: { position: "top", labels: { color: "#94a3b8" } },
+                tooltip: { intersect: false, mode: "index" },
+              },
+              scales: {
+                x: {
+                  grid: { color: "rgba(255, 255, 255, 0.1)" },
+                  ticks: { color: "#94a3b8", font: { size: 10 } },
+                },
+                y: {
+                  grid: { color: "rgba(255, 255, 255, 0.1)" },
+                  ticks: { color: "#94a3b8" },
+                  beginAtZero: false,
+                  suggestedMin: GOAL_REPORTS - 100,
+                  suggestedMax: START_REPORTS + 100,
+                },
+              },
+            },
+            plugins: [waterPlugin],
+          });
+        }
+
+        function restart() {
+          scoreboardData = { weeks: [] };
+          victoryScreen.classList.remove("visible");
+          renderAll();
+        }
+
+        function continueViewing() {
+          victoryScreen.classList.remove("visible");
+        }
+
+        function exportDataToJson() {
+          if (scoreboardData.weeks.length === 0) {
+            console.warn("Não há dados para exportar.");
+            return;
+          }
+          const dataStr = JSON.stringify(scoreboardData, null, 2);
+          const dataBlob = new Blob([dataStr], { type: "application/json" });
+          const url = URL.createObjectURL(dataBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "placar-4dx-data.json";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+
+        function importDataFromJson(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const importedData = JSON.parse(e.target.result);
+              if (importedData && Array.isArray(importedData.weeks)) {
+                scoreboardData = importedData;
+                renderAll();
+                console.log("Dados importados com sucesso!");
+              } else {
+                console.error(
+                  "Arquivo JSON inválido: a estrutura esperada não foi encontrada."
+                );
+              }
+            } catch (error) {
+              console.error("Erro ao importar o arquivo JSON:", error);
+            }
+            event.target.value = null;
+          };
+          reader.readAsText(file);
+        }
+
+        // --- EVENT LISTENERS ---
+        restartBtn.addEventListener("click", restart);
+        continueBtn.addEventListener("click", continueViewing);
+        addWeekBtn.addEventListener("click", addWeek);
+        addCommitmentForm.addEventListener("submit", addCommitment);
+        backToDashboardBtn.addEventListener("click", hideManagementView);
+        historyBtn.addEventListener("click", showHistoryView);
+        backFromHistoryBtn.addEventListener("click", hideHistoryView);
+        exportBtn.addEventListener("click", exportDataToJson);
+        importBtn.addEventListener("click", () => importFileInput.click());
+        importFileInput.addEventListener("change", importDataFromJson);
+
+        document.querySelectorAll(".expand-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const targetId = e.currentTarget.dataset.target;
+            openFullscreen(targetId);
+          });
+        });
+
+        closeFullscreenBtn.addEventListener("click", closeFullscreen);
+
+        window.addEventListener("keydown", (e) => {
+          if (
+            e.key === "Escape" &&
+            !fullscreenModal.classList.contains("hidden")
+          ) {
+            closeFullscreen();
+          }
+        });
+
+        // --- INITIALIZATION ---
+        renderAll();
+      });
+    </script>
+  </body>
+</html>
