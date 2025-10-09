@@ -35,12 +35,10 @@
         font-family: "Inter", sans-serif;
         overflow-x: hidden;
       }
-      #team-logo {
-        width: 248px;
+
+      #logo {
+        width: 300px;
         height: auto;
-        margin-top: 9em;
-        left: 315px;
-        
       }
 
       .fun-font {
@@ -261,7 +259,7 @@
       <div class="max-w-7xl mx-auto">
         <div class="text-center mb-8 relative">
           <h1 class="fun-font text-4xl md:text-6xl text-cyan-300 tracking-wide">
-            Placar 4DZIG
+            Placar 4DX
           </h1>
           <p
             class="fun-font text-xl md:text-2xl text-cyan-400 opacity-90 -mt-2 md:-mt-3"
@@ -296,17 +294,15 @@
           </div>
         </div>
 
-        <div>
         <div
           class="mb-8 p-6 bg-slate-800/50 border border-cyan-500/30 rounded-lg text-center card-glow"
         >
           <img
-            id="team-logo"
-            src="equipe.png"
-            alt="Logótipo da Equipa"
-            class="absolute top-0 left-0 w-24 h-24 rounded-full"
+            src="./equipe.png"
+            id="logo"
+            alt="Logo da Equipe"
+            class="w-24 h-24 rounded-full mx-auto mb-4"
           />
-
           <h3 class="fun-font text-xl text-cyan-300 mb-2">
             Meta Crucialmente Importante (MCI)
           </h3>
@@ -319,7 +315,6 @@
           <div
             class="mt-6 pt-4 border-t border-slate-700/50 space-y-3 text-sm text-left max-w-3xl mx-auto"
           >
-          
             <div>
               <p class="text-cyan-400 font-bold">Definição MD1:</p>
               <p class="text-slate-300">
@@ -378,17 +373,22 @@
                 class="flex justify-around text-center mb-4 text-sm text-slate-300 border-b border-t border-slate-700/50 py-2"
               >
                 <div>
-                  <p class="font-bold text-cyan-500">MD1</p>
+                  <p class="font-bold text-cyan-400">MD1</p>
                   <p id="md1-percentage" class="fun-font text-3xl">0%</p>
                 </div>
                 <div>
-                  <p class="font-bold text-cyan-500">MD2</p>
+                  <p class="font-bold text-cyan-400">MD2</p>
                   <p id="md2-percentage" class="fun-font text-3xl">0%</p>
                 </div>
               </div>
-               <div class="text-center text-xs text-slate-400 mb-4 px-2">
-                  <p>Clique com o botão esquerdo no gelo para <span class="text-cyan-400">concluir</span> (tracejado) e com o direito para <span class="text-amber-400">falhar</span> (trincado). Caso queira resetar a ação, basta clicar novamente sobre o bloco.</p>
-               </div>
+              <div class="text-center text-xs text-slate-400 mb-4 px-2">
+                <p>
+                  Clique com o botão esquerdo no gelo para
+                  <span class="text-cyan-400">concluir</span> (tracejado) e com
+                  o direito para
+                  <span class="text-amber-400">falhar</span> (trincado).
+                </p>
+              </div>
               <div
                 class="flex items-center text-xs text-slate-400 font-bold uppercase py-2 px-3 border-b border-t border-slate-700"
               >
@@ -420,7 +420,9 @@
               class="bg-slate-800 p-6 rounded-lg card-glow h-full flex flex-col"
             >
               <div class="flex justify-between items-center mb-4">
-                <h2 class="fun-font text-3xl text-cyan-400">Placar da MCI</h2>
+                <h2 class="fun-font text-3xl text-cyan-400">
+                  Desempenho da MCI
+                </h2>
                 <button
                   class="expand-btn p-2 rounded-full hover:bg-slate-700/50 transition-colors"
                   data-target="chart-card"
@@ -783,6 +785,11 @@
           renderAll();
         }
 
+        function deleteWeek(indexToDelete) {
+          scoreboardData.weeks.splice(indexToDelete, 1);
+          renderAll();
+        }
+
         function updateReportCount(index, value) {
           if (index >= 0 && index < scoreboardData.weeks.length) {
             scoreboardData.weeks[index].reports =
@@ -847,8 +854,9 @@
               week.reports !== null ? week.reports : ""
             }">
                     </div>
-                    <div class="w-1/6 text-center">
+                    <div class="w-1/6 text-center flex items-center justify-center gap-2">
                         <button class="manage-week-btn text-xs bg-slate-600 hover:bg-slate-500 text-white font-bold py-1 px-2 rounded-md transition-colors" data-index="${index}">Gerenciar</button>
+                        <button class="delete-week-btn text-lg text-white font-bold transition-colors w-6 h-6 rounded-md flex items-center justify-center bg-red-800 hover:bg-red-700" data-index="${index}" title="Excluir Semana">&times;</button>
                     </div>
                 `;
             row.children[1].appendChild(block1);
@@ -884,6 +892,12 @@
           document.querySelectorAll(".manage-week-btn").forEach((btn) => {
             btn.addEventListener("click", (e) =>
               showManagementView(parseInt(e.target.dataset.index))
+            );
+          });
+
+          document.querySelectorAll(".delete-week-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) =>
+              deleteWeek(parseInt(e.currentTarget.dataset.index))
             );
           });
 
@@ -1510,7 +1524,7 @@
 
         function exportDataToJson() {
           if (scoreboardData.weeks.length === 0) {
-            console.warn("Não há dados para exportar.");
+            alert("Não há dados para exportar.");
             return;
           }
           const dataStr = JSON.stringify(scoreboardData, null, 2);
@@ -1536,14 +1550,14 @@
               if (importedData && Array.isArray(importedData.weeks)) {
                 scoreboardData = importedData;
                 renderAll();
-                console.log("Dados importados com sucesso!");
+                alert("Dados importados com sucesso!");
               } else {
-                console.error(
+                alert(
                   "Arquivo JSON inválido: a estrutura esperada não foi encontrada."
                 );
               }
             } catch (error) {
-              console.error("Erro ao importar o arquivo JSON:", error);
+              alert("Erro ao importar o arquivo JSON:", error);
             }
             event.target.value = null;
           };
