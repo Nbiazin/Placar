@@ -37,10 +37,15 @@
       }
 
       #logo {
-        width: 300px;
+        max-width: 300px;
         height: auto;
+        margin: 0 auto 2px auto;
+        display: block;
+        filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.3));
       }
-
+      h3.fun-font {
+        line-height: 0.1; /* reduz espaço interno do texto */
+      }
       .fun-font {
         font-family: "Fredoka One", cursive;
         letter-spacing: 2px;
@@ -298,12 +303,12 @@
           class="mb-8 p-6 bg-slate-800/50 border border-cyan-500/30 rounded-lg text-center card-glow"
         >
           <img
-            src="./equipe.png"
             id="logo"
+            src="/equipe.png"
             alt="Logo da Equipe"
-            class="w-24 h-24 rounded-full mx-auto mb-4"
+            class="mx-auto mb-0 rounded-full object-contain"
           />
-          <h3 class="fun-font text-xl text-cyan-300 mb-2">
+          <h3 class="fun-font text-xl text-cyan-300 mt-0 mb-1 leading-none">
             Meta Crucialmente Importante (MCI)
           </h3>
           <p class="text-slate-300 max-w-3xl mx-auto">
@@ -386,17 +391,19 @@
                   Clique com o botão esquerdo no gelo para
                   <span class="text-cyan-400">concluir</span> (tracejado) e com
                   o direito para
-                  <span class="text-amber-400">falhar</span> (trincado).
+                  <span class="text-amber-400">falhar</span> (trincado). Para
+                  desfazer a ação, clique novamente sobre o bloco.
                 </p>
               </div>
               <div
                 class="flex items-center text-xs text-slate-400 font-bold uppercase py-2 px-3 border-b border-t border-slate-700"
               >
-                <div class="w-1/4">Semana</div>
-                <div class="w-1/6 text-center">MD 1</div>
-                <div class="w-1/6 text-center">MD 2</div>
-                <div class="w-1/4 text-center">Nº de Reports</div>
-                <div class="w-1/6 text-center">Ações</div>
+                <div class="w-[20%]">Semana</div>
+                <div class="w-[12%] text-center">MD 1</div>
+                <div class="w-[12%] text-center">MD 2</div>
+                <div class="w-[20%] text-center">Meta Reports</div>
+                <div class="w-[20%] text-center">Reports Real</div>
+                <div class="w-[16%] text-center">Ações</div>
               </div>
               <div
                 id="weeks-list"
@@ -756,8 +763,15 @@
         let placeholder = null;
 
         const phrases = ["Mandou bem!", "É isso aí!", "Quebrou tudo!"];
-        const START_REPORTS = 1127;
         const GOAL_REPORTS = 450;
+
+        const WEEKLY_GOALS = [
+          1127, 1101, 1075, 1049, 1023, 997, 971, 945, 919, 893, 867, 841, 815,
+          790, 764, 738, 712, 686, 660, 634, 608, 582, 556, 530, 504, 478, 452,
+          426, 400,
+        ];
+        const START_REPORTS = WEEKLY_GOALS[0];
+
         const PROJECT_START_DATE = new Date("2025-10-20");
         const END_DATE = new Date("2026-04-30");
 
@@ -771,6 +785,10 @@
 
         function addWeek() {
           const newWeekIndex = scoreboardData.weeks.length;
+          if (newWeekIndex >= WEEKLY_GOALS.length) {
+            console.warn("Todas as semanas planejadas já foram adicionadas.");
+            return;
+          }
           const newStartDate = new Date(PROJECT_START_DATE);
           newStartDate.setDate(newStartDate.getDate() + newWeekIndex * 7);
 
@@ -842,19 +860,37 @@
             if (week.md2Status === "failed") block2.classList.add("cracked");
 
             const formattedDate = formatDate(week.startDate);
+            const weeklyGoal = WEEKLY_GOALS[index];
+
+            let statusIndicator = "";
+            if (week.reports !== null) {
+              const comparisonGoal = WEEKLY_GOALS[index + 1] || GOAL_REPORTS;
+              const iceCubeSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6 ml-2"><path d="M20 30 L50 10 L80 30 L50 50 Z" fill="rgba(224, 242, 254, 1)" stroke="#a5f3fc" stroke-width="5"/><path d="M20 30 L20 70 L50 90 L50 50 Z" fill="rgba(186, 230, 253, 1)" stroke="#a5f3fc" stroke-width="5"/><path d="M50 50 L50 90 L80 70 L80 30 Z" fill="rgba(125, 211, 252, 1)" stroke="#a5f3fc" stroke-width="5"/></svg>`;
+              const penguinSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70" class="w-6 h-6 ml-2"><path d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z" fill="#333"/><path d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z" fill="white"/><circle cx="22" cy="30" r="3" fill="#333"/><circle cx="38" cy="30" r="3" fill="#333"/><polygon points="27,38 33,38 30,45" fill="orange"/><ellipse cx="20" cy="68" rx="8" ry="4" fill="orange"/><ellipse cx="40" cy="68" rx="8" ry="4" fill="orange"/></svg>`;
+
+              if (week.reports >= comparisonGoal) {
+                statusIndicator = `<span title="Acima ou igual à meta">${iceCubeSVG}</span>`;
+              } else {
+                statusIndicator = `<span title="Abaixo da meta">${penguinSVG}</span>`;
+              }
+            }
 
             row.innerHTML = `
-                    <div class="w-1/4 font-bold">Semana ${index + 1}
+                    <div class="w-[20%] font-bold">Semana ${index + 1}
                         <span class="text-xs text-slate-400 font-normal block">${formattedDate}</span>
                     </div>
-                    <div class="w-1/6 flex justify-center"></div>
-                    <div class="w-1/6 flex justify-center"></div>
-                    <div class="w-1/4">
-                        <input type="number" data-index="${index}" class="report-input w-full bg-slate-800 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500" placeholder="Reports..." value="${
+                    <div class="w-[12%] flex justify-center"></div>
+                    <div class="w-[12%] flex justify-center"></div>
+                    <div class="w-[20%] text-center font-bold text-slate-300">${weeklyGoal}</div>
+                    <div class="w-[20%]">
+                        <div class="flex items-center">
+                            <input type="number" data-index="${index}" class="report-input w-full bg-slate-800 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500" placeholder="Reports..." value="${
               week.reports !== null ? week.reports : ""
             }">
+                            ${statusIndicator}
+                        </div>
                     </div>
-                    <div class="w-1/6 text-center flex items-center justify-center gap-2">
+                    <div class="w-[16%] text-center flex items-center justify-center gap-2">
                         <button class="manage-week-btn text-xs bg-slate-600 hover:bg-slate-500 text-white font-bold py-1 px-2 rounded-md transition-colors" data-index="${index}">Gerenciar</button>
                         <button class="delete-week-btn text-lg text-white font-bold transition-colors w-6 h-6 rounded-md flex items-center justify-center bg-red-800 hover:bg-red-700" data-index="${index}" title="Excluir Semana">&times;</button>
                     </div>
@@ -1373,27 +1409,26 @@
             ...scoreboardData.weeks.map((w) => w.reports),
           ];
 
-          const pointStyles = actualProgressData.map((value) => {
-            if (value === null || typeof value === "undefined")
+          const pointStyles = actualProgressData.map((value, index) => {
+            if (value === null || typeof value === "undefined") {
+              return penguinIcon;
+            }
+            if (index === 0) {
               return iceCubeIcon;
-            return value < START_REPORTS ? penguinIcon : iceCubeIcon;
+            }
+
+            const goalForPoint = WEEKLY_GOALS[index];
+            if (typeof goalForPoint === "undefined") {
+              return penguinIcon;
+            }
+
+            return value >= goalForPoint ? iceCubeIcon : penguinIcon;
           });
 
-          const totalWeeksInProject = Math.ceil(
-            (END_DATE - PROJECT_START_DATE) / (1000 * 60 * 60 * 24 * 7)
-          );
-
-          const burndownLineData = Array.from(
-            { length: totalWeeksInProject + 1 },
-            (_, i) => {
-              if (totalWeeksInProject <= 0) return START_REPORTS;
-              const progress = i / totalWeeksInProject;
-              return START_REPORTS - progress * (START_REPORTS - GOAL_REPORTS);
-            }
-          );
+          const burndownLineData = WEEKLY_GOALS;
 
           const allLabels = ["Início"];
-          for (let i = 0; i < totalWeeksInProject; i++) {
+          for (let i = 0; i < WEEKLY_GOALS.length - 1; i++) {
             const weekDate = new Date(PROJECT_START_DATE);
             weekDate.setUTCDate(weekDate.getUTCDate() + i * 7);
             allLabels.push(`S${i + 1} ${formatDate(weekDate)}`);
@@ -1483,6 +1518,7 @@
                   backgroundColor: "transparent",
                   pointRadius: 0,
                   borderWidth: 2,
+                  hidden: true,
                 },
               ],
             },
