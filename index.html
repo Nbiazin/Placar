@@ -315,7 +315,7 @@
             Reduzir abertura de reports Not_bugs dos últimos 30 dias de
             <strong class="text-white">1100</strong> para
             <strong class="text-white">470</strong> (60%) até
-            <strong class="text-white">30/04/2026</strong>.
+            <strong class="text-white">29/04/2026</strong>.
           </p>
           <div
             class="mt-6 pt-4 border-t border-slate-700/50 space-y-3 text-sm text-left max-w-3xl mx-auto"
@@ -476,7 +476,12 @@
         ></h2>
 
         <div class="bg-slate-800/50 p-6 rounded-lg card-glow mb-8">
-          <h3 class="fun-font text-2xl text-cyan-400 mb-4">Novo Compromisso</h3>
+          <h3
+            id="commitment-form-title"
+            class="fun-font text-2xl text-cyan-400 mb-4"
+          >
+            Novo Compromisso
+          </h3>
           <form
             id="add-commitment-form"
             class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
@@ -521,12 +526,20 @@
                 <option value="md2">MD2</option>
               </select>
             </div>
-            <div class="md:col-span-4">
+            <div class="md:col-span-4 flex gap-4">
               <button
                 type="submit"
+                id="submit-commitment-btn"
                 class="w-full md:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-md transform hover:scale-105 transition-transform duration-200"
               >
                 Adicionar
+              </button>
+              <button
+                type="button"
+                id="cancel-edit-btn"
+                class="hidden w-full md:w-auto bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-md transition-colors"
+              >
+                Cancelar
               </button>
             </div>
           </form>
@@ -746,6 +759,13 @@
         const importBtn = document.getElementById("import-btn");
         const exportBtn = document.getElementById("export-btn");
         const importFileInput = document.getElementById("import-file-input");
+        const cancelEditBtn = document.getElementById("cancel-edit-btn");
+        const submitCommitmentBtn = document.getElementById(
+          "submit-commitment-btn"
+        );
+        const commitmentFormTitle = document.getElementById(
+          "commitment-form-title"
+        );
 
         let scoreboardData = { weeks: [] };
         let mciChartInstance = null;
@@ -756,6 +776,7 @@
           right: "auto",
         };
         let currentManagingWeekIndex = null;
+        let currentEditingCommitmentId = null;
 
         // Fullscreen state
         let originalParent = null;
@@ -975,6 +996,7 @@
           currentManagingWeekIndex = null;
           managementView.classList.add("hidden");
           mainDashboard.classList.remove("hidden");
+          cancelEditMode(); // Garante que o formulário seja resetado ao sair
           renderAll();
         }
 
@@ -1147,6 +1169,9 @@
                         } text-white font-bold p-1 rounded-md" data-id="${
               c.id
             }" data-status="failed" title="Falhou">&#10007;</button>
+                        <button class="edit-btn text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold p-1 rounded-md" data-id="${
+                          c.id
+                        }" title="Editar">&#9998;</button>
                          <button class="delete-btn text-xs bg-gray-700 hover:bg-gray-600 text-white font-bold p-1 rounded-md" data-id="${
                            c.id
                          }" title="Excluir">&times;</button>
@@ -1163,6 +1188,12 @@
             })
           );
 
+          document.querySelectorAll(".edit-btn").forEach((btn) =>
+            btn.addEventListener("click", (e) => {
+              startEditCommitment(e.currentTarget.dataset.id);
+            })
+          );
+
           document.querySelectorAll(".delete-btn").forEach((btn) =>
             btn.addEventListener("click", (e) => {
               deleteCommitment(e.currentTarget.dataset.id);
@@ -1170,7 +1201,35 @@
           );
         }
 
-        function addCommitment(e) {
+        function startEditCommitment(commitmentId) {
+          if (currentManagingWeekIndex === null) return;
+          const week = scoreboardData.weeks[currentManagingWeekIndex];
+          const commitment = week.commitments.find(
+            (c) => c.id === commitmentId
+          );
+          if (!commitment) return;
+
+          currentEditingCommitmentId = commitmentId;
+
+          document.getElementById("commitment-text").value = commitment.text;
+          document.getElementById("commitment-responsible").value =
+            commitment.responsible;
+          document.getElementById("commitment-md").value = commitment.md;
+
+          submitCommitmentBtn.textContent = "Salvar Alterações";
+          cancelEditBtn.classList.remove("hidden");
+          commitmentFormTitle.textContent = "Editando Compromisso";
+        }
+
+        function cancelEditMode() {
+          currentEditingCommitmentId = null;
+          addCommitmentForm.reset();
+          submitCommitmentBtn.textContent = "Adicionar";
+          cancelEditBtn.classList.add("hidden");
+          commitmentFormTitle.textContent = "Novo Compromisso";
+        }
+
+        function handleCommitmentSubmit(e) {
           e.preventDefault();
           if (currentManagingWeekIndex === null) return;
 
@@ -1180,19 +1239,33 @@
           );
           const mdSelect = document.getElementById("commitment-md");
 
-          const newCommitment = {
-            id: `c${Date.now()}`,
-            md: mdSelect.value,
-            text: textInput.value,
-            responsible: responsibleInput.value,
-            status: "pending",
-          };
+          if (currentEditingCommitmentId) {
+            // Modo de Edição
+            const week = scoreboardData.weeks[currentManagingWeekIndex];
+            const commitment = week.commitments.find(
+              (c) => c.id === currentEditingCommitmentId
+            );
+            if (commitment) {
+              commitment.text = textInput.value;
+              commitment.responsible = responsibleInput.value;
+              commitment.md = mdSelect.value;
+            }
+          } else {
+            // Modo de Adição
+            const newCommitment = {
+              id: `c${Date.now()}`,
+              md: mdSelect.value,
+              text: textInput.value,
+              responsible: responsibleInput.value,
+              status: "pending",
+            };
+            scoreboardData.weeks[currentManagingWeekIndex].commitments.push(
+              newCommitment
+            );
+          }
 
-          scoreboardData.weeks[currentManagingWeekIndex].commitments.push(
-            newCommitment
-          );
-          renderManagementView();
-          addCommitmentForm.reset();
+          cancelEditMode(); // Reseta o formulário
+          renderManagementView(); // Re-renderiza a lista
         }
 
         function updateCommitmentStatus(commitmentId, newStatus) {
@@ -1604,7 +1677,8 @@
         restartBtn.addEventListener("click", restart);
         continueBtn.addEventListener("click", continueViewing);
         addWeekBtn.addEventListener("click", addWeek);
-        addCommitmentForm.addEventListener("submit", addCommitment);
+        addCommitmentForm.addEventListener("submit", handleCommitmentSubmit);
+        cancelEditBtn.addEventListener("click", cancelEditMode);
         backToDashboardBtn.addEventListener("click", hideManagementView);
         historyBtn.addEventListener("click", showHistoryView);
         backFromHistoryBtn.addEventListener("click", hideHistoryView);
