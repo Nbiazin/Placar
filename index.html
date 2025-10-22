@@ -484,22 +484,22 @@
           </h3>
           <form
             id="add-commitment-form"
-            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+            class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
           >
-            <div class="md:col-span-2">
+            <div class="md:col-span-5">
               <label
                 for="commitment-text"
                 class="block text-sm font-medium text-slate-400 mb-1"
                 >Compromisso</label
               >
-              <input
-                type="text"
+              <textarea
                 id="commitment-text"
                 required
+                rows="3"
                 class="w-full bg-slate-900/80 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500"
-              />
+              ></textarea>
             </div>
-            <div>
+            <div class="md:col-span-2">
               <label
                 for="commitment-responsible"
                 class="block text-sm font-medium text-slate-400 mb-1"
@@ -512,7 +512,7 @@
                 class="w-full bg-slate-900/80 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500"
               />
             </div>
-            <div>
+            <div class="md:col-span-1">
               <label
                 for="commitment-md"
                 class="block text-sm font-medium text-slate-400 mb-1"
@@ -526,7 +526,20 @@
                 <option value="md2">MD2</option>
               </select>
             </div>
-            <div class="md:col-span-4 flex gap-4">
+            <div class="md:col-span-2">
+              <label
+                for="commitment-deadline"
+                class="block text-sm font-medium text-slate-400 mb-1"
+                >Prazo</label
+              >
+              <input
+                type="date"
+                id="commitment-deadline"
+                required
+                class="w-full bg-slate-900/80 text-white p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+            <div class="md:col-span-5 flex gap-4">
               <button
                 type="submit"
                 id="submit-commitment-btn"
@@ -804,6 +817,13 @@
           return `${day}/${month}/${year}`;
         }
 
+        function formatDateShort(dateString) {
+          // YYYY-MM-DD
+          if (!dateString) return "N/A";
+          const [year, month, day] = dateString.split("-");
+          return `${day}/${month}/${year}`;
+        }
+
         function addWeek() {
           const newWeekIndex = scoreboardData.weeks.length;
           if (newWeekIndex >= WEEKLY_GOALS.length) {
@@ -1056,11 +1076,19 @@
                                             .map(
                                               (c) => `
                                         <div class="bg-slate-900/50 p-2 rounded">
-                                            <p>${c.text} <strong>(${
+                                            <p class="whitespace-normal break-words font-medium">${
+                                              c.text
+                                            } <strong>(${
                                                 c.responsible
-                                              })</strong> - ${getStatusIcon(
-                                                c.status
-                                              )}</p>
+                                              })</strong></p>
+                                            <div class="text-xs text-slate-400 mt-1">
+                                                Prazo: <span class="text-cyan-400 font-medium">${formatDateShort(
+                                                  c.deadline
+                                                )}</span>
+                                            </div>
+                                            <div class="text-xs mt-1">
+                                                ${getStatusIcon(c.status)}
+                                            </div>
                                         </div>
                                     `
                                             )
@@ -1078,11 +1106,19 @@
                                             .map(
                                               (c) => `
                                         <div class="bg-slate-900/50 p-2 rounded">
-                                            <p>${c.text} <strong>(${
+                                            <p class="whitespace-normal break-words font-medium">${
+                                              c.text
+                                            } <strong>(${
                                                 c.responsible
-                                              })</strong> - ${getStatusIcon(
-                                                c.status
-                                              )}</p>
+                                              })</strong></p>
+                                            <div class="text-xs text-slate-400 mt-1">
+                                                Prazo: <span class="text-cyan-400 font-medium">${formatDateShort(
+                                                  c.deadline
+                                                )}</span>
+                                            </div>
+                                            <div class="text-xs mt-1">
+                                                ${getStatusIcon(c.status)}
+                                            </div>
                                         </div>
                                     `
                                             )
@@ -1149,10 +1185,15 @@
 
             item.innerHTML = `
                     <div class="flex-grow">
-                        <p class="font-bold">${c.text}</p>
+                        <p class="font-bold whitespace-normal break-words">${
+                          c.text
+                        }</p>
                         <p class="text-xs text-slate-400">Responsável: ${
                           c.responsible
                         }</p>
+                        <p class="text-xs text-cyan-400 mt-1">Prazo: ${formatDateShort(
+                          c.deadline
+                        )}</p>
                     </div>
                     <div class="flex-shrink-0 flex items-center gap-2">
                         <button class="status-btn text-xs ${
@@ -1215,6 +1256,8 @@
           document.getElementById("commitment-responsible").value =
             commitment.responsible;
           document.getElementById("commitment-md").value = commitment.md;
+          document.getElementById("commitment-deadline").value =
+            commitment.deadline || "";
 
           submitCommitmentBtn.textContent = "Salvar Alterações";
           cancelEditBtn.classList.remove("hidden");
@@ -1238,6 +1281,7 @@
             "commitment-responsible"
           );
           const mdSelect = document.getElementById("commitment-md");
+          const deadlineInput = document.getElementById("commitment-deadline");
 
           if (currentEditingCommitmentId) {
             // Modo de Edição
@@ -1249,6 +1293,7 @@
               commitment.text = textInput.value;
               commitment.responsible = responsibleInput.value;
               commitment.md = mdSelect.value;
+              commitment.deadline = deadlineInput.value;
             }
           } else {
             // Modo de Adição
@@ -1258,6 +1303,7 @@
               text: textInput.value,
               responsible: responsibleInput.value,
               status: "pending",
+              deadline: deadlineInput.value,
             };
             scoreboardData.weeks[currentManagingWeekIndex].commitments.push(
               newCommitment
