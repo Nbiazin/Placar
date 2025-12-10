@@ -901,18 +901,18 @@
             if (week.md2Status === "failed") block2.classList.add("cracked");
 
             const formattedDate = formatDate(week.startDate);
-            const weeklyGoal = WEEKLY_GOALS[index];
+            // CORRECTION: use current index for current week's goal
+            const weeklyGoal = WEEKLY_GOALS[index] || GOAL_REPORTS;
 
             let statusIndicator = "";
             if (week.reports !== null) {
-              const comparisonGoal = WEEKLY_GOALS[index + 1] || GOAL_REPORTS;
               const iceCubeSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6 ml-2"><path d="M20 30 L50 10 L80 30 L50 50 Z" fill="rgba(224, 242, 254, 1)" stroke="#a5f3fc" stroke-width="5"/><path d="M20 30 L20 70 L50 90 L50 50 Z" fill="rgba(186, 230, 253, 1)" stroke="#a5f3fc" stroke-width="5"/><path d="M50 50 L50 90 L80 70 L80 30 Z" fill="rgba(125, 211, 252, 1)" stroke="#a5f3fc" stroke-width="5"/></svg>`;
               const penguinSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70" class="w-6 h-6 ml-2"><path d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z" fill="#333"/><path d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z" fill="white"/><circle cx="22" cy="30" r="3" fill="#333"/><circle cx="38" cy="30" r="3" fill="#333"/><polygon points="27,38 33,38 30,45" fill="orange"/><ellipse cx="20" cy="68" rx="8" ry="4" fill="orange"/><ellipse cx="40" cy="68" rx="8" ry="4" fill="orange"/></svg>`;
 
-              if (week.reports >= comparisonGoal) {
-                statusIndicator = `<span title="Acima ou igual à meta">${iceCubeSVG}</span>`;
+              if (week.reports > weeklyGoal) {
+                statusIndicator = `<span title="Acima da meta (Ruim)">${iceCubeSVG}</span>`;
               } else {
-                statusIndicator = `<span title="Abaixo da meta">${penguinSVG}</span>`;
+                statusIndicator = `<span title="Igual ou abaixo da meta (Bom)">${penguinSVG}</span>`;
               }
             }
 
@@ -1343,6 +1343,18 @@
             .filter((r) => r !== null)
             .pop();
           if (lastReport !== undefined && lastReport <= GOAL_REPORTS) {
+            const victoryTitle = document.querySelector("#victory-screen h2");
+            const victoryText = document.querySelector("#victory-screen p");
+
+            if (lastReport <= GOAL_REPORTS) {
+              victoryTitle.textContent = "Meta Atingida!";
+              victoryText.textContent =
+                "Vocês chegaram ao nível do mar! Parabéns, equipe!";
+            } else {
+              victoryTitle.textContent = "Fim da Semana!";
+              victoryText.textContent =
+                "Alguns gelos resistiram, derreteram e sobrou pra gente: enxugar gelo";
+            }
             if (!victoryScreen.classList.contains("visible")) {
               setTimeout(() => victoryScreen.classList.add("visible"), 800);
             }
@@ -1523,6 +1535,19 @@
               '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70" width="25" height="25"><path d="M30,0 C10,0 0,20 0,40 C0,65 15,70 30,70 C45,70 60,65 60,40 C60,20 50,0 30,0 Z" fill="#333"/><path d="M30,15 C20,15 12,25 12,40 C12,55 20,60 30,60 C40,60 48,55 48,40 C48,25 40,15 30,15 Z" fill="white"/><circle cx="22" cy="30" r="3" fill="#333"/><circle cx="38" cy="30" r="3" fill="#333"/><polygon points="27,38 33,38 30,45" fill="orange"/><ellipse cx="20" cy="68" rx="8" ry="4" fill="orange"/><ellipse cx="40" cy="68" rx="8" ry="4" fill="orange"/></svg>'
             );
 
+          // Ajuste: A linha de burndown deve começar no valor inicial e seguir as metas semanais alinhadas
+          // Início (idx 0): 1100
+          // S1 (idx 1): 1100 (Meta da semana 1)
+          // S2 (idx 2): 1068 (Meta da semana 2)
+          const burndownLineData = [START_REPORTS, ...WEEKLY_GOALS];
+
+          const allLabels = ["Início"];
+          for (let i = 0; i < WEEKLY_GOALS.length; i++) {
+            const weekDate = new Date(PROJECT_START_DATE);
+            weekDate.setUTCDate(weekDate.getUTCDate() + i * 7);
+            allLabels.push(`S${i + 1} ${formatDate(weekDate)}`);
+          }
+          
           const actualProgressData = [
             START_REPORTS,
             ...scoreboardData.weeks.map((w) => w.reports),
@@ -1533,25 +1558,21 @@
               return penguinIcon;
             }
             if (index === 0) {
-              return iceCubeIcon;
+              return iceCubeIcon; // Ponto inicial (Início)
             }
 
-            const goalForPoint = WEEKLY_GOALS[index];
+            // Agora comparamos com o burndownLineData que está devidamente alinhado
+            // burndownLineData[1] é a meta da S1 (1100), burndownLineData[2] é meta da S2 (1068)
+            const goalForPoint = burndownLineData[index];
+            
             if (typeof goalForPoint === "undefined") {
               return penguinIcon;
             }
 
-            return value >= goalForPoint ? iceCubeIcon : penguinIcon;
+            // Se valor real > meta (ruim) -> Gelo
+            // Se valor real <= meta (bom) -> Pinguim
+            return value > goalForPoint ? iceCubeIcon : penguinIcon;
           });
-
-          const burndownLineData = WEEKLY_GOALS;
-
-          const allLabels = ["Início"];
-          for (let i = 0; i < WEEKLY_GOALS.length - 1; i++) {
-            const weekDate = new Date(PROJECT_START_DATE);
-            weekDate.setUTCDate(weekDate.getUTCDate() + i * 7);
-            allLabels.push(`S${i + 1} ${formatDate(weekDate)}`);
-          }
 
           const goalLineData = Array(allLabels.length).fill(GOAL_REPORTS);
 
